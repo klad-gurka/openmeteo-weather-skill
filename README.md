@@ -144,21 +144,9 @@ The script maps WMO weather codes to icons:
 - Provides actual current weather observations
 - No API key needed
 
-### Weather Icons
-**Makin-Things Weather Icons**
-- GitHub: https://github.com/Makin-Things/weather-icons
-- License: MIT
-- These icons are based on AmCharts weather icons, updated for Home Assistant
-
 ## Icon Attribution
 
-Weather icons are from **[Makin-Things/weather-icons](https://github.com/Makin-Things/weather-icons)** (MIT License).
-
-```
-Weather Icons - A set of updated weather icons based of the AmCharts style of icon.
-Copyright (c) 2020 Makin' Things
-License: MIT - https://github.com/Makin-Things/weather-icons/blob/master/LICENSE
-```
+All weather icons are from **[Makin-Things/weather-icons](https://github.com/Makin-Things/weather-icons)** (MIT License).
 
 ## Installation for OpenClaw
 
