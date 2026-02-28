@@ -20,6 +20,32 @@
     "image_width": 1000,
     "image_height": 420,
     "icon_size": 64,
-    "title": "Väderrapport"
+    "title": "Väderrapport",
+    "language": "sv",
+    "include_forecast": true
+  },
+  "languages": {
+    "sv": {
+      "title": "Väderrapport",
+      "city": "Stad",
+      "temp": "Temp",
+      "wind": "Vind",
+      "humidity": "Fukt",
+      "high": "Hög",
+      "low": "Låg",
+      "forecast": "Prognos",
+      "footer": "Ikoner: Makin-Things | Data: Open-Meteo"
+    },
+    "en": {
+      "title": "Weather Report",
+      "city": "City",
+      "temp": "Temp",
+      "wind": "Wind",
+      "humidity": "Humidity",
+      "high": "High",
+      "low": "Low",
+      "forecast": "Forecast",
+      "footer": "Icons: Makin-Things | Data: Open-Meteo"
+    }
   }
 }
