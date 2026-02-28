@@ -2,6 +2,10 @@
 
 A weather skill that generates beautiful weather report images using the Open-Meteo API and Makin-Things weather icons.
 
+## Demo
+
+![Weather Report Demo](demo.png)
+
 ## Features
 
 - 📊 Fetches real-time weather data (not forecast)
@@ -9,16 +13,6 @@ A weather skill that generates beautiful weather report images using the Open-Me
 - 🇸🇪 Supports Swedish locations
 - 🎨 Uses Makin-Things weather icons
 - ⚙️ Easy configuration via config.json
-
-## System Requirements
-
-```bash
-# Python dependencies
-pip3 install pillow cairosvg
-
-# System dependencies (for CairoSVG)
-sudo apt-get install -y librsvg2 python3-cairo
-```
 
 ## Quick Start
 
@@ -32,6 +26,42 @@ python3 weather-image.py
 ```
 
 Output is saved to `/tmp/weather-report.png`
+
+## OpenClaw Setup
+
+### 1. Copy files to OpenClaw
+
+```bash
+cp weather-image.py config.json ~/.openclaw/workspace/skills/openmeteo/
+mkdir -p ~/.openclaw/workspace/skills/openmeteo
+```
+
+### 2. Install dependencies
+
+```bash
+pip3 install pillow cairosvg
+sudo apt-get install -y librsvg2 python3-cairo
+```
+
+### 3. Configure Heartbeat
+
+OpenClaw will automatically run the weather script via Heartbeat. Make sure your HEARTBEAT.md includes:
+
+```markdown
+## Morning Weather (once per day, around 7-8 AM)
+- Run: python3 /tmp/weather-image.py
+- Send the image /tmp/weather-report.png to #klåd (channel 1474539715666509975)
+- Only do this once per day - check if already posted today!
+```
+
+The Heartbeat runs when OpenClaw wakes up (around every 30 minutes), so the weather will be posted in the morning!
+
+### How it works in OpenClaw
+
+1. **Heartbeat triggers** - When OpenClaw wakes up, it checks HEARTBEAT.md
+2. **Script runs** - Python script fetches weather from Open-Meteo API
+3. **Image generated** - Saved to `/tmp/weather-report.png`
+4. **Posted to Discord** - The agent sends the image to #klåd
 
 ## Configuration
 
@@ -147,26 +177,6 @@ The script maps WMO weather codes to icons:
 ## Icon Attribution
 
 All weather icons are from **[Makin-Things/weather-icons](https://github.com/Makin-Things/weather-icons)** (MIT License).
-
-## Installation for OpenClaw
-
-1. Copy scripts to your OpenClaw skills folder:
-```bash
-cp weather-image.py config.json ~/.openclaw/workspace/skills/openmeteo/
-```
-
-2. Install dependencies:
-```bash
-pip3 install pillow cairosvg
-sudo apt-get install -y librsvg2
-```
-
-3. Configure cron job (example - runs at 7 AM):
-```
-0 7 * * * python3 ~/.openclaw/workspace/skills/openmeteo/weather-image.py
-```
-
-4. The image is saved to `/tmp/weather-report.png` - configure your cron to send it to Discord
 
 ## Troubleshooting
 
