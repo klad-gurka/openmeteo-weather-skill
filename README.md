@@ -8,13 +8,7 @@ A weather skill that generates beautiful weather report images using the Open-Me
 - 🖼️ Generates beautiful Discord-ready images
 - 🇸🇪 Supports Swedish locations
 - 🎨 Uses Makin-Things weather icons
-
-## Locations
-
-The skill fetches weather for these Swedish cities:
-- Göteborg (57.7089, 11.9746)
-- Mölndal (57.6561, 12.0176)
-- Rävlanda (57.68, 12.50)
+- ⚙️ Easy configuration via config.json
 
 ## System Requirements
 
@@ -26,40 +20,101 @@ pip3 install pillow cairosvg
 sudo apt-get install -y librsvg2 python3-cairo
 ```
 
-## Scripts
-
-### weather-report.sh
-
-Simple shell script that outputs weather as plain text.
+## Quick Start
 
 ```bash
-bash weather-report.sh
+# Clone the repo
+git clone https://github.com/klad-gurka/openmeteo-weather-skill.git
+cd openmeteo-weather-skill
+
+# Run
+python3 weather-image.py
 ```
 
-Output example:
+Output is saved to `/tmp/weather-report.png`
+
+## Configuration
+
+All settings are in `config.json`:
+
+```json
+{
+  "locations": [
+    {
+      "name": "Göteborg",
+      "lat": 57.7089,
+      "lon": 11.9746
+    },
+    {
+      "name": "Mölndal", 
+      "lat": 57.6561,
+      "lon": 12.0176
+    },
+    {
+      "name": "Rävlanda",
+      "lat": 57.68,
+      "lon": 12.50
+    }
+  ],
+  "settings": {
+    "image_width": 1000,
+    "image_height": 420,
+    "icon_size": 64,
+    "title": "Väderrapport"
+  }
+}
 ```
-📅 **feb 28**
 
-**Göteborg:** ☀️ 6.7°C | 💨 6.5 m/s E | 💧 96%
-**Mölndal:** ☀️ 6.8°C | 💨 7.6 m/s E | 💧 99%
-**Rävlanda:** ☀️ 5.7°C | 💨 4.0 m/s E | 💧 100%
+### Adding New Locations
 
-*Data: Open-Meteo*
+Simply add a new entry to the `locations` array in config.json:
+
+```json
+{
+  "name": "Stockholm",
+  "lat": 59.3293,
+  "lon": 18.0686
+}
 ```
 
-### weather-image.py
+Then re-run the script - the image will automatically adjust to fit all locations!
+
+### Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| image_width | 1000 | Image width in pixels |
+| image_height | 420 | Base image height (auto-adjusts) |
+| icon_size | 64 | Weather icon size |
+| title | "Väderrapport" | Title shown on image |
+
+## Scripts
+
+### weather-image.py (Recommended)
 
 Python script that generates a Discord-ready image with weather icons.
 
 ```bash
 python3 weather-image.py
+# Or with custom config:
+python3 weather-image.py /path/to/config.json
 ```
 
-This will:
-1. Download weather icons from Makin-Things (first run only)
-2. Fetch current weather from Open-Meteo API
-3. Generate a nice image with all data
-4. Save to `/tmp/weather-report.png`
+### weather-report.sh
+
+Simple shell script that outputs weather as plain text (no image).
+
+```bash
+bash weather-report.sh
+```
+
+Output:
+```
+📅 **feb 28**
+
+**Göteborg:** ☀️ 6.7°C | 💨 6.5 m/s E | 💧 96%
+...
+```
 
 ## Weather Codes
 
@@ -95,7 +150,7 @@ The script maps WMO weather codes to icons:
 - License: MIT
 - These icons are based on AmCharts weather icons, updated for Home Assistant
 
-### Icon Attribution
+## Icon Attribution
 
 Weather icons are from **[Makin-Things/weather-icons](https://github.com/Makin-Things/weather-icons)** (MIT License).
 
@@ -105,14 +160,11 @@ Copyright (c) 2020 Makin' Things
 License: MIT - https://github.com/Makin-Things/weather-icons/blob/master/LICENSE
 ```
 
-## Installation
-
-### For OpenClaw Cron Job
+## Installation for OpenClaw
 
 1. Copy scripts to your OpenClaw skills folder:
 ```bash
-cp weather-report.sh ~/.openclaw/workspace/skills/openmeteo/
-cp weather-image.py ~/.openclaw/workspace/skills/openmeteo/
+cp weather-image.py config.json ~/.openclaw/workspace/skills/openmeteo/
 ```
 
 2. Install dependencies:
@@ -121,28 +173,12 @@ pip3 install pillow cairosvg
 sudo apt-get install -y librsvg2
 ```
 
-3. Configure cron job to run at 7 AM:
+3. Configure cron job (example - runs at 7 AM):
 ```
-0 7 * * * python3 /path/to/weather-image.py
-```
-
-### Manual Run
-
-```bash
-python3 weather-image.py
-# Output saved to /tmp/weather-report.png
+0 7 * * * python3 ~/.openclaw/workspace/skills/openmeteo/weather-image.py
 ```
 
-## Output
-
-The image includes:
-- Title with current date
-- Weather icon for each location
-- City name
-- Temperature (°C)
-- Wind speed and direction
-- Humidity (%)
-- Footer with data source attribution
+4. The image is saved to `/tmp/weather-report.png` - configure your cron to send it to Discord
 
 ## Troubleshooting
 
@@ -153,8 +189,15 @@ sudo apt-get install -y librsvg2-bin
 ```
 
 ### Icon download fails
-The script downloads icons on first run. If it fails, check your internet connection or manually download from:
-https://github.com/Makin-Things/weather-icons/tree/master/static
+The script downloads icons on first run to `/tmp/makin-icons/`. If it fails:
+- Check your internet connection
+- Manually download icons from: https://github.com/Makin-Things/weather-icons/tree/master/static
+
+### Config file not found
+The script looks for config.json in the same directory as the script. You can also pass the config path as an argument:
+```bash
+python3 weather-image.py /path/to/config.json
+```
 
 ## License
 

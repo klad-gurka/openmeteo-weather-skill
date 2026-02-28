@@ -1,0 +1,25 @@
+{
+  "locations": [
+    {
+      "name": "Göteborg",
+      "lat": 57.7089,
+      "lon": 11.9746
+    },
+    {
+      "name": "Mölndal", 
+      "lat": 57.6561,
+      "lon": 12.0176
+    },
+    {
+      "name": "Rävlanda",
+      "lat": 57.68,
+      "lon": 12.50
+    }
+  ],
+  "settings": {
+    "image_width": 1000,
+    "image_height": 420,
+    "icon_size": 64,
+    "title": "Väderrapport"
+  }
+}

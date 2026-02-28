@@ -1,13 +1,50 @@
 #!/usr/bin/env python3
 """Weather report image generator for OpenClaw
-Uses Makin-Things SVG weather icons!
+Uses Makin-Things SVG weather icons and config.json for locations!
 """
-from PIL import Image, ImageDraw, ImageFont
-import cairosvg
-import urllib.request
-import json
 import os
+import sys
+import json
 from datetime import datetime
+
+# Try to import dependencies - install instructions if missing
+try:
+    from PIL import Image, ImageDraw, ImageFont
+    import cairosvg
+    import urllib.request
+except ImportError as e:
+    print(f"Missing dependency: {e}")
+    print("Install: pip3 install pillow cairosvg")
+    sys.exit(1)
+
+# Config file path - can be overridden via argument
+CONFIG_PATH = os.path.dirname(os.path.abspath(__file__)) + "/config.json"
+if len(sys.argv) > 1:
+    CONFIG_PATH = sys.argv[1]
+
+# Load config
+if not os.path.exists(CONFIG_PATH):
+    print(f"Config file not found: {CONFIG_PATH}")
+    print("Using default config...")
+    config = {
+        "locations": [
+            {"name": "Göteborg", "lat": 57.7089, "lon": 11.9746},
+            {"name": "Mölndal", "lat": 57.6561, "lon": 12.0176},
+            {"name": "Rävlanda", "lat": 57.68, "lon": 12.50}
+        ],
+        "settings": {"title": "Väderrapport"}
+    }
+else:
+    with open(CONFIG_PATH) as f:
+        config = json.load(f)
+
+# Get config values
+locations = config.get("locations", [])
+settings = config.get("settings", {})
+title = settings.get("title", "Väderrapport")
+img_width = settings.get("image_width", 1000)
+img_height = settings.get("image_height", 420)
+icon_size = settings.get("icon_size", 64)
 
 # Icons directory
 ICONS_DIR = "/tmp/makin-icons"
@@ -21,7 +58,8 @@ def get_icon(name, size=64):
         try:
             svg_data = urllib.request.urlopen(svg_url, timeout=10).read()
             cairosvg.svg2png(bytestring=svg_data, write_to=path, output_width=size, output_height=size)
-        except:
+        except Exception as e:
+            print(f"Warning: Could not download {name}: {e}")
             return None
     return Image.open(path).convert("RGBA")
 
@@ -30,10 +68,7 @@ print("Laddar väderikoner...")
 weather_icons = {}
 for name in ["clear-day", "cloudy-1-day", "cloudy-2-day", "cloudy", "fog", 
              "rainy-1", "rainy-2", "rainy-3", "snowy-1", "snowy-2", "snowy-3", "thunderstorms"]:
-    try:
-        weather_icons[name] = get_icon(name, 64)
-    except Exception as e:
-        print(f"Kunde inte ladda {name}: {e}")
+    weather_icons[name] = get_icon(name, icon_size)
 
 # Preload data icons
 print("Laddar dataikoner...")
@@ -60,7 +95,7 @@ def get_weather(lat, lon):
         data = json.loads(urllib.request.urlopen(url, timeout=10).read().decode())
         return data['current']
     except Exception as e:
-        print(f"Fel: {e}")
+        print(f"Fel vid hämtning av väder för {lat},{lon}: {e}")
         return None
 
 # Wind direction
@@ -69,8 +104,14 @@ def get_wind_dir(deg):
     if deg is None: return "N"
     return dirs[int((deg + 22.5) / 45) % 8]
 
-# Create image - wider and more spacing
-W, H = 1000, 420
+# Calculate image height based on number of locations
+row_height = 90
+header_height = 100
+footer_height = 40
+H = header_height + (len(locations) * row_height) + footer_height + 20
+
+# Create image
+W = img_width
 img = Image.new('RGB', (W, H), color='#1a1a2e')
 draw = ImageDraw.Draw(img)
 
@@ -83,17 +124,10 @@ try:
 except:
     font_title = font_loc = font_data = font_footer = ImageFont.load_default()
 
-# Locations
-locations = [
-    ("Göteborg", 57.7089, 11.9746),
-    ("Mölndal", 57.6561, 12.0176),
-    ("Rävlanda", 57.68, 12.50),
-]
-
-# Title - centered without icon
-title = f"Väderrapport - {datetime.now().strftime('%d %b')}"
-title_w = draw.textlength(title, font=font_title)
-draw.text(((W - title_w) / 2, 25), title, fill='white', font=font_title)
+# Title - centered
+title_text = f"{title} - {datetime.now().strftime('%d %b')}"
+title_w = draw.textlength(title_text, font=font_title)
+draw.text(((W - title_w) / 2, 25), title_text, fill='white', font=font_title)
 
 # Column headers
 col_y = 85
@@ -102,9 +136,13 @@ draw.text((320, col_y), "Temp", fill='#888888', font=font_data)
 draw.text((480, col_y), "Vind", fill='#888888', font=font_data)
 draw.text((760, col_y), "Fukt", fill='#888888', font=font_data)
 
-# Draw each location - more spacing
-y = 130
-for name, lat, lon in locations:
+# Draw each location
+y = header_height
+for loc in locations:
+    name = loc.get("name", "Unknown")
+    lat = loc.get("lat", 0)
+    lon = loc.get("lon", 0)
+    
     w = get_weather(lat, lon)
     if w:
         icon_name = get_icon_name(w['weather_code'])
@@ -114,29 +152,30 @@ for name, lat, lon in locations:
         if icon:
             img.paste(icon, (30, y), icon)
         
-        # City name - position 110
-        draw.text((110, y + 15), f"{name}", fill='white', font=font_loc)
+        # City name
+        draw.text((110, y + 15), name, fill='white', font=font_loc)
         
-        # Temperature (red) - position 320
+        # Temperature (red)
         temp = f"{w['temperature_2m']:.1f}°C"
         draw.text((320, y + 15), temp, fill='#ff6b6b', font=font_data)
         
-        # Wind - position 480
+        # Wind
         wind = f"{w['wind_speed_10m']:.1f} m/s {get_wind_dir(w['wind_direction_10m'])}"
         if wind_icon:
             img.paste(wind_icon, (480, y + 8), wind_icon)
         draw.text((520, y + 15), wind, fill='#4ecdc4', font=font_data)
         
-        # Humidity - position 760
+        # Humidity
         humidity = f"{w['relative_humidity_2m']}%"
         if humidity_icon:
             img.paste(humidity_icon, (760, y + 8), humidity_icon)
         draw.text((800, y + 15), humidity, fill='#45b7d1', font=font_data)
-    y += 90
+    y += row_height
 
 # Footer
-draw.text((30, 380), "Ikoner: Makin-Things | Data: Open-Meteo", fill='#666666', font=font_footer)
+draw.text((30, H - 30), "Ikoner: Makin-Things | Data: Open-Meteo", fill='#666666', font=font_footer)
 
 # Save
-img.save("/tmp/weather-report.png")
-print("Klar! Saved /tmp/weather-report.png")
+output_path = "/tmp/weather-report.png"
+img.save(output_path)
+print(f"Klar! Saved to {output_path}")
